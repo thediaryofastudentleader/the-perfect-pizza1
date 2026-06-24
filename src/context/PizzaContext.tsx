@@ -1,5 +1,4 @@
 import React from 'react';
-import { usePizzaContext } from '../context/PizzaContext';
 import { PIZZA_MENU } from '../data/menu';
 
 const INGREDIENT_COLORS: Record<string, string> = {
