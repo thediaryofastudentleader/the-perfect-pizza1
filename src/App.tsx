@@ -1,4 +1,5 @@
 import React from 'react';
+import './App.css';
 import { PizzaProvider } from './context/PizzaContext';
 import { PizzaCanvas } from './components/PizzaCanvas';
 import { MenuSelector } from './components/MenuSelector';
