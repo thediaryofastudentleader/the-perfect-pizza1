@@ -1,150 +1,115 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { usePizzaContext } from '../context/PizzaContext';
 
+const INGREDIENT_COLORS: Record<string, string> = {
+  'Mozzarella': '#fffbe6', 'Extra Mozzarella': '#fffbe6', 'Cheddar': '#ffb347',
+  'Danish Feta': '#f0f0f0', 'Parmesan': '#ffe4b5', 'Vegan Cheese': '#e8f5e9',
+  'Tomato Sauce': '#c0392b', 'Creamy White Sauce': '#fff8e7', 'White Sauce': '#fff8e7',
+  'BBQ Sauce': '#5c2e0e', 'Mayonnaise': '#fffff0', 'Sweet Chilli Mayo': '#ffcc80',
+  'Sweet Chilli Sauce': '#ff7043', 'Peri Peri Sauce': '#d32f2f', 'Sticky BBQ Basting': '#3e2723',
+  'Cheesy BBQ': '#8b4513', 'Sticky BBQ': '#5d4037', 'Tikka': '#ff8a65', 'Sweet Chilli': '#ffab40',
+  'Peri Peri': '#e53935', 'Italian Spices': '#2e7d32', 'Garlic': '#fff9c4', 'Chilli': '#e53935',
+  'Salt': '#ffffff', 'Flatbread': '#deb887', 'Bolognese Mince': '#5d4037',
+  'Roast Chicken Strips': '#ffcc80', 'BBQ Roast Chicken Strips': '#a1887f',
+  'Tikka Roast Chicken Strips': '#ff8a65', 'Steak Strips': '#795548', 'Chorizo': '#bf360c',
+  'Mushrooms': '#d7ccc8', 'Olives': '#212121', 'Cherry Tomatoes': '#e53935',
+  'Assorted Peppers': '#ffeb3b', 'Gherkins': '#689f38', 'Pineapple': '#ffeb3b',
+  'Red Onions': '#9c27b0', 'Pepperoni': '#b71c1c', 'Ham': '#ffab91', 'Bacon': '#bf360c',
+  'Salami': '#c62828', 'Plant-Based Soya': '#c8e6c9',
+};
+
+const INGREDIENT_SIZES: Record<string, number> = {
+  'Mozzarella': 18, 'Extra Mozzarella': 18, 'Cheddar': 16, 'Danish Feta': 14,
+  'Parmesan': 12, 'Vegan Cheese': 16, 'Tomato Sauce': 280, 'Creamy White Sauce': 280,
+  'White Sauce': 280, 'BBQ Sauce': 280, 'Mayonnaise': 14, 'Sweet Chilli Mayo': 14,
+  'Sweet Chilli Sauce': 14, 'Peri Peri Sauce': 14, 'Sticky BBQ Basting': 280,
+  'Cheesy BBQ': 280, 'Sticky BBQ': 280, 'Tikka': 14, 'Sweet Chilli': 14, 'Peri Peri': 14,
+  'Italian Spices': 8, 'Garlic': 10, 'Chilli': 8, 'Salt': 6, 'Flatbread': 280,
+  'Bolognese Mince': 16, 'Roast Chicken Strips': 20, 'BBQ Roast Chicken Strips': 20,
+  'Tikka Roast Chicken Strips': 20, 'Steak Strips': 22, 'Chorizo': 16, 'Mushrooms': 18,
+  'Olives': 12, 'Cherry Tomatoes': 14, 'Assorted Peppers': 16, 'Gherkins': 14,
+  'Pineapple': 18, 'Red Onions': 14, 'Pepperoni': 22, 'Ham': 20, 'Bacon': 18,
+  'Salami': 20, 'Plant-Based Soya': 16,
+};
+
+function getBaseType(ingredients: string[]): 'tomato' | 'white' | 'bbq' {
+  if (ingredients.includes('BBQ Sauce') || ingredients.includes('Cheesy BBQ') || ingredients.includes('Sticky BBQ')) return 'bbq';
+  if (ingredients.includes('White Sauce') || ingredients.includes('Creamy White Sauce')) return 'white';
+  return 'tomato';
+}
+
+function generatePositions(count: number, seed: number): { x: number; y: number }[] {
+  const positions: { x: number; y: number }[] = [];
+  const rng = (s: number) => {
+    const x = Math.sin(s) * 10000;
+    return x - Math.floor(x);
+  };
+  for (let i = 0; i < count; i++) {
+    const angle = rng(seed + i * 7.3) * Math.PI * 2;
+    const radius = rng(seed + i * 13.7) * 100;
+    positions.push({ x: 140 + Math.cos(angle) * radius, y: 140 + Math.sin(angle) * radius });
+  }
+  return positions;
+}
+
 export const PizzaCanvas: React.FC = () => {
-  const { appliedIngredients, addIngredient, removeIngredient, showSuccess, matchedPizza, getHint } = usePizzaContext();
-  const [isDragOver, setIsDragOver] = React.useState(false);
+  const { appliedIngredients, matchedPizza, showSuccess, getHint } = usePizzaContext();
+  const baseType = getBaseType(appliedIngredients);
+  const hint = getHint();
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
+  const renderIngredient = (ingredient: string, index: number) => {
+    const color = INGREDIENT_COLORS[ingredient] || '#888';
+    const size = INGREDIENT_SIZES[ingredient] || 16;
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const ingredient = e.dataTransfer.getData('text/plain');
-    if (ingredient) {
-      addIngredient(ingredient);
+    if (size >= 200) {
+      if (index > 0 && appliedIngredients.slice(0, index).includes(ingredient)) return null;
+      return (
+        <div
+          key={`${ingredient}-${index}`}
+          className="absolute rounded-full"
+          style={{ width: size, height: size, backgroundColor: color, left: 0, top: 0, opacity: 0.9 }}
+        />
+      );
     }
-  };
 
-  const handleTouchDrop = (ingredient: string) => {
-    addIngredient(ingredient);
-  };
-
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    if (appliedIngredients.length > 0) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Only remove if clicking near center
-      if (Math.hypot(x - rect.width/2, y - rect.height/2) < 100) {
-        removeIngredient(appliedIngredients[appliedIngredients.length - 1]);
-      }
-    }
+    const positions = generatePositions(6, index * 31 + ingredient.length);
+    return positions.map((pos: { x: number; y: number }, posIndex: number) => (
+      <div
+        key={`${ingredient}-${index}-${posIndex}`}
+        className="absolute rounded-full"
+        style={{
+          width: size, height: size, backgroundColor: color,
+          left: pos.x - size / 2, top: pos.y - size / 2,
+          border: ingredient.includes('Sauce') || ingredient.includes('Basting') ? 'none' : '1px solid rgba(0,0,0,0.1)',
+        }}
+      />
+    ));
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
-      <div className="relative w-full max-w-md aspect-square mb-4">
-        {/* Hint Banner */}
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 w-full text-center">
-          <div className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-            {getHint()}
-          </div>
-        </div>
-
-        {/* Pizza Base */}
-        <motion.div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={handleCanvasClick}
-          className={`relative w-full h-full rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 shadow-2xl border-8 border-orange-400 transition-all duration-300 ${isDragOver ? 'border-orange-600 bg-orange-100' : ''}`}
-          style={{ 
-            width: '400px', 
-            height: '400px', 
-            margin: '0 auto',
-            backgroundImage: 'radial-gradient(circle, #fef3c7 0%, #fde68a 100%)'
-          }}
-        >
-          {/* Ingredients Layer */}
-          {appliedIngredients.map((ingredient, index) => {
-            const positions = Array.from({ length: 5 }, (_, i) => {
-              const angle = (i * 72 + index * 15) * (Math.PI / 180);
-              const radius = 80 + (index % 2) * 40;
-              return {
-                left: `calc(50% + ${Math.cos(angle) * radius}px - 20px)`,
-                top: `calc(50% + ${Math.sin(angle) * radius}px - 20px)`,
-                zIndex: index,
-              };
-            });
-
-            return (
-              <motion.div
-                key={ingredient}
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 180 }}
-                transition={{ duration: 0.5, type: 'spring', stiffness: 100 }}
-                className="absolute w-10 h-10 flex items-center justify-center text-2xl"
-                style={positions[index % positions.length]}
-              >
-                <IngredientEmoji name={ingredient} />
-              </motion.div>
-            );
-          })}
-
-          {/* Empty State */}
+    <div className="bg-white rounded-2xl shadow-lg p-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Your Pizza</h2>
+      <div className="flex justify-center mb-4">
+        <div className={`relative w-72 h-72 rounded-full shadow-inner ${baseType === 'tomato' ? 'bg-red-100' : baseType === 'white' ? 'bg-yellow-50' : 'bg-amber-100'} ${showSuccess ? 'animate-pulse' : ''}`}>
+          {appliedIngredients.map((ing: string, idx: number) => renderIngredient(ing, idx))}
           {appliedIngredients.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xl font-medium">
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm font-medium">
               Drag ingredients here!
             </div>
           )}
-        </motion.div>
-
-        {/* Success Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: showSuccess ? 1 : 0, y: showSuccess ? 0 : -50 }}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg"
-        >
-          {matchedPizza ? `🎉 Perfect ${matchedPizza}!` : '🍕 Custom Masterpiece!'}
-        </motion.div>
+        </div>
       </div>
-
-      {/* Ingredient List */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-md">
-        {appliedIngredients.map((ingredient, index) => (
-          <motion.div
-            key={`${ingredient}-${index}`}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            onClick={() => removeIngredient(ingredient)}
-            className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium cursor-pointer hover:bg-red-100 hover:text-red-800 transition-colors"
-          >
-            <IngredientEmoji name={ingredient} size="small" />
-            {ingredient}
-            <span className="text-red-500 ml-1">✕</span>
-          </motion.div>
-        ))}
+      {matchedPizza && (
+        <div className="text-center mb-3">
+          <span className="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full font-bold text-lg">
+            ✨ {matchedPizza} Matched!
+          </span>
+        </div>
+      )}
+      <div className="bg-orange-50 rounded-lg p-3 text-center">
+        <p className="text-sm text-gray-700 font-medium">💡 {hint}</p>
       </div>
     </div>
   );
-};
-
-const IngredientEmoji: React.FC<{ name: string; size?: 'small' }> = ({ name, size = 'large' }) => {
-  const emojiMap: Record<string, string> = {
-    'Tomato Sauce': '🍅', 'Cheesy BBQ': '🧀', 'Sticky BBQ': '🍯', 'Sweet Chilli Mayo': '🌶️', 
-    'Tikka': '🇮🇳', 'Sweet Chilli': '🌶️', 'Peri Peri': '🌶️', 'Creamy White Sauce': '🥛',
-    'White Sauce': '🥛', 'BBQ Sauce': '🍯', 'Mayonnaise': '🍯', 'Italian Spices': '🌿',
-    'Bolognese Mince': '🥩', 'Roast Chicken Strips': '🍗', 'Steak Strips': '🥩', 
-    'BBQ Roast Chicken Strips': '🍗', 'Tikka Roast Chicken Strips': '🍗', 'Chorizo': '🥩',
-    'Danish Feta': '🧀', 'Mushrooms': '🍄', 'Olives': '🫒',
-    'Cherry Tomatoes': '🍅', 'Assorted Peppers': '🫑', 'Gherkins': '🥒', 'Pineapple': '🍍', 'Red Onions': '🧅',
-    'Pepperoni': '🍕', 'Ham': '🥓', 'Bacon': '🥓', 'Salami': '🥓',
-    'Vegan Cheese': '🧀', 'Plant-Based Soya': '🌱',
-    'Mozzarella': '🧀', 'Cheddar': '🧀', 'Parmesan': '🧀', 'Salt': '🧂', 'Flatbread': '🫓',
-    'Extra Mozzarella': '🧀', 'Chilli': '🌶️', 'Garlic': '🧄',
-  };
-
-  return <span className={size === 'small' ? 'text-sm' : 'text-xl'}>{emojiMap[name] || '🍕'}</span>;
 };
