@@ -1,6 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Optional: custom styles */
+.pizza-base {
+  width: 18rem;
+  height: 18rem;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.ingredient-dot {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.success-pulse {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
 import React from 'react';
 import { PizzaProvider } from './context/PizzaContext';
 import { PizzaCanvas } from './components/PizzaCanvas';
