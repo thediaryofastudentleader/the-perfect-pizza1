@@ -1,160 +1,89 @@
 import React, { useState } from 'react';
 import { usePizzaContext } from '../context/PizzaContext';
-import { PIZZA_MENU, TOPPING_PRICES } from '../data/menu';
+import { PIZZA_MENU, EXTRA_TOPPINGS } from '../data/menu';
 
-export const OrderSummary: React.FC = () => {
-  const {
-    appliedIngredients,
-    matchedPizza,
-    isCustom,
-    basePrice,
-    extrasPrice,
-    totalPrice,
-    orderDispatched,
-    customerDetails,
-    removeIngredient,
-    resetPizza,
-    setCustomerDetails,
-    placeOrder,
-  } = usePizzaContext();
+type TabType = 'menu' | 'extras';
 
-  const [showForm, setShowForm] = useState(false);
+export const MenuSelector: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('menu');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Favourites');
+  const { addIngredient, appliedIngredients, resetPizza } = usePizzaContext();
 
-  const getIngredientPrice = (ing: string) => {
-    if (matchedPizza) {
-      const menuItem = PIZZA_MENU.find(p => p.name === matchedPizza);
-      if (menuItem?.ingredients.includes(ing)) return 0;
+  const categories = ['Favourites', 'Gourmet', 'Classics'];
+
+  const handleAddIngredient = (ingredient: string) => {
+    if (!appliedIngredients.includes(ingredient)) {
+      addIngredient(ingredient);
     }
-    return TOPPING_PRICES[ing] || 2.00;
   };
 
-  const handlePlaceOrder = () => {
-    if (!customerDetails.name || !customerDetails.phone || !customerDetails.address) {
-      setShowForm(true);
-      return;
-    }
-    placeOrder();
-    setShowForm(false);
+  const handleSelectPizza = (pizza: typeof PIZZA_MENU[0]) => {
+    resetPizza();
+    pizza.ingredients.forEach((ing: string) => {
+      setTimeout(() => addIngredient(ing), 100);
+    });
   };
-
-  if (appliedIngredients.length === 0 && !orderDispatched) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 text-center text-gray-500">
-        <p className="text-lg">🍕 Start building your pizza to see the order summary!</p>
-      </div>
-    );
-  }
-
-  if (orderDispatched) {
-    return (
-      <div className="bg-green-50 rounded-2xl shadow-lg p-6 text-center border-2 border-green-200">
-        <div className="text-5xl mb-3">🎉</div>
-        <h2 className="text-2xl font-bold text-green-800 mb-2">Order Dispatched!</h2>
-        <p className="text-green-700">Your pizza is on its way! Estimated delivery: 30-45 mins.</p>
-      </div>
-    );
-  }
-
-  const customBasePrice = isCustom && basePrice === 0 ? 12.00 : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">🛒 Order Summary</h2>
-        <button
-          onClick={resetPizza}
-          className="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          Clear All
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setActiveTab('menu')} className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${activeTab === 'menu' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+          📋 Menu
+        </button>
+        <button onClick={() => setActiveTab('extras')} className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${activeTab === 'extras' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+          ➕ Extras
         </button>
       </div>
 
-      {matchedPizza && (
-        <div className="bg-orange-50 rounded-lg p-3 mb-4">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-gray-800">{matchedPizza}</span>
-            <span className="font-bold text-orange-600">${basePrice.toFixed(2)}</span>
+      {activeTab === 'menu' && (
+        <>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {categories.map((cat: string) => (
+              <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {cat}
+              </button>
+            ))}
           </div>
-        </div>
-      )}
-
-      <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-        {appliedIngredients.map((ing, idx) => {
-          const price = getIngredientPrice(ing);
-          const isBaseIngredient = matchedPizza && PIZZA_MENU.find(p => p.name === matchedPizza)?.ingredients.includes(ing);
-
-          return (
-            <div key={`${ing}-${idx}`} className="flex justify-between items-center py-1 px-2 rounded hover:bg-gray-50">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => removeIngredient(ing)}
-                  className="text-red-400 hover:text-red-600 text-xs w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50"
-                  title="Remove"
-                >
-                  ✕
-                </button>
-                <span className={`text-sm ${isBaseIngredient ? 'font-medium text-gray-800' : 'text-gray-600'}`}>
-                  {ing}
-                  {isBaseIngredient && <span className="text-xs text-green-600 ml-1">(included)</span>}
-                </span>
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            {PIZZA_MENU.filter((p: typeof PIZZA_MENU[0]) => p.category === selectedCategory).map((pizza: typeof PIZZA_MENU[0]) => (
+              <div key={pizza.id} className="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer bg-gray-50" onClick={() => handleSelectPizza(pizza)}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-gray-800">{pizza.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{pizza.description}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {pizza.ingredients.map((ing: string) => (
+                        <span key={ing} className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border">{ing}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="font-bold text-orange-600 text-lg">${pizza.price.toFixed(2)}</span>
+                </div>
               </div>
-              {price > 0 && <span className="text-sm text-gray-500">+${price.toFixed(2)}</span>}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="border-t pt-4 space-y-2">
-        {customBasePrice > 0 && (
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Custom Pizza Base</span>
-            <span>${customBasePrice.toFixed(2)}</span>
+            ))}
           </div>
-        )}
-        {extrasPrice > 0 && (
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>Extra Toppings</span>
-            <span>+${extrasPrice.toFixed(2)}</span>
-          </div>
-        )}
-        <div className="flex justify-between items-center pt-2 border-t">
-          <span className="text-xl font-bold text-gray-800">Total</span>
-          <span className="text-2xl font-bold text-orange-600">${totalPrice.toFixed(2)}</span>
-        </div>
-      </div>
-
-      {showForm && (
-        <div className="mt-4 space-y-3">
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={customerDetails.name}
-            onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
-          />
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={customerDetails.phone}
-            onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none"
-          />
-          <textarea
-            placeholder="Delivery Address"
-            value={customerDetails.address}
-            onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none resize-none"
-            rows={2}
-          />
-        </div>
+        </>
       )}
 
-      <button
-        onClick={handlePlaceOrder}
-        className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl active:scale-95"
-      >
-        {showForm ? '🚀 Place Order' : 'Checkout'}
-      </button>
+      {activeTab === 'extras' && (
+        <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+          {Object.entries(EXTRA_TOPPINGS).map(([category, toppings]: [string, string[]]) => (
+            <div key={category}>
+              <h3 className="font-semibold text-gray-700 mb-2 text-sm uppercase tracking-wide">{category}</h3>
+              <div className="flex flex-wrap gap-2">
+                {toppings.map((topping: string) => {
+                  const isAdded = appliedIngredients.includes(topping);
+                  return (
+                    <button key={topping} onClick={() => handleAddIngredient(topping)} disabled={isAdded} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isAdded ? 'bg-green-100 text-green-700 cursor-default' : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200'}`}>
+                      {isAdded ? '✓ ' : '+ '}{topping}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
