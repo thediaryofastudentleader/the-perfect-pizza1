@@ -1,128 +1,97 @@
-import React, { useState } from 'react';
-import { usePizzaContext } from '../context/PizzaContext';
-import { PIZZA_MENU, EXTRA_TOPPINGS } from '../data/menu';
+export interface Pizza {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  ingredients: string[];
+}
 
-type TabType = 'menu' | 'extras';
+export const PIZZA_MENU: Pizza[] = [
+  {
+    id: '1',
+    name: 'Margherita',
+    category: 'Classics',
+    description: 'Classic tomato sauce and mozzarella',
+    price: 12.00,
+    ingredients: ['Tomato Sauce', 'Mozzarella', 'Italian Spices'],
+  },
+  {
+    id: '2',
+    name: 'Pepperoni',
+    category: 'Favourites',
+    description: 'America\'s favorite with spicy pepperoni',
+    price: 14.50,
+    ingredients: ['Tomato Sauce', 'Mozzarella', 'Pepperoni'],
+  },
+  {
+    id: '3',
+    name: 'BBQ Chicken',
+    category: 'Favourites',
+    description: 'Sweet BBQ sauce with roast chicken',
+    price: 15.00,
+    ingredients: ['Cheesy BBQ', 'BBQ Roast Chicken Strips', 'Red Onions'],
+  },
+  {
+    id: '4',
+    name: 'Hawaiian',
+    category: 'Classics',
+    description: 'Ham and pineapple on tomato base',
+    price: 13.50,
+    ingredients: ['Tomato Sauce', 'Mozzarella', 'Ham', 'Pineapple'],
+  },
+  {
+    id: '5',
+    name: 'Meat Lovers',
+    category: 'Gourmet',
+    description: 'Loaded with all the meats',
+    price: 16.00,
+    ingredients: ['Tomato Sauce', 'Mozzarella', 'Pepperoni', 'Ham', 'Bacon', 'Salami'],
+  },
+  {
+    id: '6',
+    name: 'Veggie Supreme',
+    category: 'Gourmet',
+    description: 'Fresh vegetables on a crispy base',
+    price: 14.00,
+    ingredients: ['Tomato Sauce', 'Mozzarella', 'Mushrooms', 'Olives', 'Cherry Tomatoes', 'Assorted Peppers'],
+  },
+  {
+    id: '7',
+    name: 'Peri Peri Chicken',
+    category: 'Favourites',
+    description: 'Spicy peri peri sauce with chicken',
+    price: 15.50,
+    ingredients: ['Peri Peri', 'Mozzarella', 'Roast Chicken Strips', 'Red Onions'],
+  },
+  {
+    id: '8',
+    name: 'Tikka Chicken',
+    category: 'Gourmet',
+    description: 'Authentic tikka flavor',
+    price: 15.50,
+    ingredients: ['Tikka', 'Mozzarella', 'Tikka Roast Chicken Strips', 'Red Onions'],
+  },
+];
 
-export const MenuSelector: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('menu');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Favourites');
-  const { addIngredient, appliedIngredients, resetPizza } = usePizzaContext();
+export const EXTRA_TOPPINGS: Record<string, string[]> = {
+  'Sauces': ['Tomato Sauce', 'Cheesy BBQ', 'Sticky BBQ', 'Sweet Chilli Mayo', 'Tikka', 'Sweet Chilli', 'Peri Peri', 'Creamy White Sauce', 'White Sauce', 'BBQ Sauce', 'Mayonnaise'],
+  'Meats': ['Bolognese Mince', 'Roast Chicken Strips', 'Steak Strips', 'BBQ Roast Chicken Strips', 'Tikka Roast Chicken Strips', 'Chorizo', 'Pepperoni', 'Ham', 'Bacon', 'Salami'],
+  'Cheeses': ['Danish Feta', 'Vegan Cheese', 'Mozzarella', 'Cheddar', 'Parmesan', 'Extra Mozzarella'],
+  'Veggies': ['Mushrooms', 'Olives', 'Cherry Tomatoes', 'Assorted Peppers', 'Gherkins', 'Pineapple', 'Red Onions', 'Chilli', 'Garlic'],
+  'Other': ['Italian Spices', 'Salt', 'Flatbread', 'Plant-Based Soya'],
+};
 
-  const categories = ['Favourites', 'Gourmet', 'Classics'];
-
-  const handleAddIngredient = (ingredient: string) => {
-    if (!appliedIngredients.includes(ingredient)) {
-      addIngredient(ingredient);
-    }
-  };
-
-  const handleSelectPizza = (pizza: typeof PIZZA_MENU[0]) => {
-    resetPizza();
-    // Add all pizza ingredients
-    pizza.ingredients.forEach(ing => {
-      setTimeout(() => addIngredient(ing), 100);
-    });
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setActiveTab('menu')}
-          className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-            activeTab === 'menu' 
-              ? 'bg-orange-500 text-white' 
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          📋 Menu
-        </button>
-        <button
-          onClick={() => setActiveTab('extras')}
-          className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors ${
-            activeTab === 'extras' 
-              ? 'bg-orange-500 text-white' 
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          ➕ Extras
-        </button>
-      </div>
-
-      {activeTab === 'menu' && (
-        <>
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {PIZZA_MENU.filter(p => p.category === selectedCategory).map(pizza => (
-              <div
-                key={pizza.id}
-                className="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer bg-gray-50"
-                onClick={() => handleSelectPizza(pizza)}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-gray-800">{pizza.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{pizza.description}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {pizza.ingredients.map(ing => (
-                        <span key={ing} className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border">
-                          {ing}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <span className="font-bold text-orange-600 text-lg">${pizza.price.toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {activeTab === 'extras' && (
-        <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-          {Object.entries(EXTRA_TOPPINGS).map(([category, toppings]) => (
-            <div key={category}>
-              <h3 className="font-semibold text-gray-700 mb-2 text-sm uppercase tracking-wide">{category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {toppings.map(topping => {
-                  const isAdded = appliedIngredients.includes(topping);
-                  return (
-                    <button
-                      key={topping}
-                      onClick={() => handleAddIngredient(topping)}
-                      disabled={isAdded}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                        isAdded
-                          ? 'bg-green-100 text-green-700 cursor-default'
-                          : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200'
-                      }`}
-                    >
-                      {isAdded ? '✓ ' : '+ '}{topping}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+export const TOPPING_PRICES: Record<string, number> = {
+  'Tomato Sauce': 0, 'Cheesy BBQ': 0, 'Sticky BBQ': 0, 'Sweet Chilli Mayo': 0,
+  'Tikka': 0, 'Sweet Chilli': 0, 'Peri Peri': 0, 'Creamy White Sauce': 0,
+  'White Sauce': 0, 'BBQ Sauce': 0, 'Mayonnaise': 0, 'Italian Spices': 0,
+  'Bolognese Mince': 2.50, 'Roast Chicken Strips': 2.50, 'Steak Strips': 3.00,
+  'BBQ Roast Chicken Strips': 2.50, 'Tikka Roast Chicken Strips': 2.50, 'Chorizo': 2.50,
+  'Danish Feta': 1.50, 'Mushrooms': 1.00, 'Olives': 1.00,
+  'Cherry Tomatoes': 1.00, 'Assorted Peppers': 1.00, 'Gherkins': 1.00, 'Pineapple': 1.00, 'Red Onions': 1.00,
+  'Pepperoni': 2.00, 'Ham': 2.00, 'Bacon': 2.00, 'Salami': 2.00,
+  'Vegan Cheese': 1.50, 'Plant-Based Soya': 2.00,
+  'Mozzarella': 0, 'Cheddar': 1.50, 'Parmesan': 1.50, 'Salt': 0, 'Flatbread': 0,
+  'Extra Mozzarella': 1.50, 'Chilli': 0.50, 'Garlic': 0.50,
 };
